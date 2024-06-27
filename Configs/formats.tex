@@ -134,3 +134,26 @@
 \setlength{\headheight}{14.5pt}
 \addtolength{\topmargin}{-2.5pt}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Nombres de la semana para el calendario
+%https://tex.stackexchange.com/questions/10186/weekday-captions-with-the-tikz-library-calendar/10199#10199
+\makeatletter%
+\tikzoption{day headings}{\tikzstyle{day heading}=[#1]}
+\tikzstyle{day heading}=[]
+\tikzstyle{day letter headings}=[
+    execute before day scope={ \ifdate{day of month=1}{%
+      \pgfmathsetlength{\pgf@ya}{\tikz@lib@cal@yshift}%
+      \pgfmathsetlength\pgf@xa{\tikz@lib@cal@xshift}%
+      \pgftransformyshift{-\pgf@ya}
+      \foreach \d/\l in {0/\tiny{L},1/\tiny{M},2/\tiny{X},3/\tiny{J},4/\tiny{V},5/\tiny{S},6/\tiny{D}} {
+        \pgf@xa=\d\pgf@xa%
+        \pgftransformxshift{\pgf@xa}%
+        \pgftransformyshift{\pgf@ya}%
+        \node[every day,day heading]{\l};%
+      } 
+    }{}%
+  }%
+]
+
+\makeatother%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
