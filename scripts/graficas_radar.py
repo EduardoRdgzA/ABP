@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np 
 
 # Datos ejemlo 
-categorias = ["Organización", "Calidad Contendio", "Aplicacion Habilidades", "Metacognición", "Creatividad"]
+categorias = ["O&P","C&P", "A&H", "R&M","C&M"]
+N = len(categorias)  # Número de variables
+
 
 data_bf1 = {
     "investigacion": [1, 2, 4, 5, 5],
@@ -23,18 +25,16 @@ data_bf3 = {
 }
 
 
-# Número de variables
-N = len(categorias)
 
 # Calcular los ángulos para cada eje
 # angulos_grados = [n/float(N) * 360 for n in range(N)]
-angulos = [n/float(N) * 2 * np.pi for n in range(N)]
+angulos_raw = [n/float(N) * 2 * np.pi for n in range(N)]
 
 # Agregar el primer valor al final de la lista para cerrar el pentágono
-angulos = angulos + angulos[:1] # 6 elementos
+angulos = angulos_raw + angulos_raw[:1] # 6 elementos
 
 
-def adj_data(data:dict) -> dict:
+def loop_data(data:dict) -> dict:
     """Funcion que añade el primer varo al final para cerrar el pentágono
 
     Args:
@@ -46,6 +46,23 @@ def adj_data(data:dict) -> dict:
     for key in data:
         data[key] += data[key][:1]
     return data
+
+print(data_bf1)
+print(angulos_raw)
+
+def vectores(data_dict:dict, angulos_raw:list):
+    datos_categorias = [ data_dict[key] for key in data_dict ]
+    vectores = []
+    for data_categoria in datos_categorias:
+        vector = list(zip(data_categoria, angulos_raw))
+        vectores.append(vector)
+    count = 0
+    for categoria in data_dict:
+        data_dict[categoria] = vectores[count]
+        count += 1
+    print(data_dict)
+vectores(data_bf1, angulos_raw)
+
 
 # Crear la figura
 """
@@ -76,7 +93,7 @@ def radar(grafica:str, data:dict, color:list)-> None:
 
     grafica.set_xticks(angulos)
     grafica.set_theta_direction(-1)
-    grafica.set_xticklabels(["O&P","C&P", "A&H", "R&M","C&M","C&M"])
+    grafica.set_xticklabels(["O&P","C&P", "A&H", "R&M","C&M","O&P"])
     grafica.set_theta_offset(np.pi/2)
     grafica.set_yticks([1, 2, 3, 4, 5])
     grafica.spines['polar'].set_visible(False)
@@ -84,16 +101,15 @@ def radar(grafica:str, data:dict, color:list)-> None:
 # Gráficar
 color= ['#38761d', '#bf9133', "#351e75"]
 
-data_bf1 = adj_data(data_bf1)
+data_bf1 = loop_data(data_bf1)
 radar(bf1, data= data_bf1, color= color)
 
-data_bf2 = adj_data(data_bf2)
+data_bf2 = loop_data(data_bf2)
 radar(bf2, data= data_bf2, color= color)
 
-data_bf3 = adj_data(data_bf3)
+data_bf3 = loop_data(data_bf3)
 radar(bf3, data= data_bf3, color= color)
-
-
 
 plt.tight_layout()
 plt.show()
+
