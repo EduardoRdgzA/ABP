@@ -25,36 +25,47 @@ data_bf3 = {
     "presentacion" : [5, 5, 5, 5, 4]
 }
 
-
-
 # Calcular los ángulos para cada eje
 # angulos_grados = [n/float(N) * 360 for n in range(N)]
 angulos_raw = [n/float(N) * 2 * np.pi for n in range(N)]
 # Agregar el primer valor al final de la lista para cerrar el pentágono
 angulos = angulos_raw + angulos_raw[:1] # 6 elementos
 
-
 def loop_data(data:dict) -> dict:
-    """Funcion que añade el primer varo al final para cerrar el pentágono
+    """
+    Añade el primer valor de cada lista de datos al final de la misma para cerrar el polígono en una gráfica radar.
+
+    Esta función toma un diccionario donde cada clave corresponde a una categoría y su valor es una lista de números (valores para cada vértice del radar). Para cada lista, agrega su primer elemento al final, permitiendo que la gráfica radar se cierre correctamente formando un polígono.
 
     Args:
-        data (dict): data del pentágono
+        data (dict): Diccionario con los datos de cada categoría. Cada valor debe ser una lista de números.
 
     Returns:
-        dict: data con el valor final añadido
+        dict: El mismo diccionario de entrada, pero con el primer valor de cada lista añadido al final.
     """
+    data_copy = {}
     for key in data:
-        data[key] += data[key][:1]
-    return data
+        data_copy[key] = data[key] + data[key][:1]
+    return data_copy
 
 def list_comprehension(datos:dict) -> list:
     lista = [datos[key] for key in datos]
     return lista
 
-
 def generar_vectores_por_categoria(datos:dict, angulos:list) -> dict:
-    # Extrae las listas de valores por categoría
-    valores_por_categoria = list_comprehension(datos)
+    """
+    Genera los vectores (radio, ángulo) para cada categoría a partir de los datos y los ángulos dados.
+
+    Esta función toma un diccionario de datos donde cada clave es una categoría y su valor es una lista de números (radios para cada vértice del radar), junto con una lista de ángulos. Devuelve un nuevo diccionario donde cada categoría está asociada a una lista de tuplas (radio, ángulo), facilitando la conversión a coordenadas polares para graficar.
+
+    Args:
+        datos (dict): Diccionario con los datos de cada categoría. Cada valor debe ser una lista de números (radios).
+        angulos (list): Lista de ángulos (en radianes) correspondientes a cada vértice del radar.
+
+    Returns:
+        dict: Diccionario donde cada clave es una categoría y su valor es una lista de tuplas (radio, ángulo).
+    """
+    valores_por_categoria = list_comprehension(datos) # Extrae las listas de valores por categoría
 
     # Combina cada valor con su ángulo correspondiente
     vectores_por_categoria = []
@@ -69,26 +80,21 @@ def generar_vectores_por_categoria(datos:dict, angulos:list) -> dict:
 
     return nuevos_datos
 
-datos_vectores_bf1 = generar_vectores_por_categoria(data_bf1, angulos_raw)
-datos_vectores_bf2 = generar_vectores_por_categoria(data_bf2, angulos_raw)
-datos_vectores_bf3 = generar_vectores_por_categoria(data_bf3, angulos_raw)
-
-vec = list_comprehension(datos_vectores_bf1)
-
 def vector_resultante_por_categoria(datos:dict) -> dict:
-    """Extrae un diccionario con los vectores resultantes en coordenadas cartesianas
+    """
+    Calcula el vector resultante en coordenadas cartesianas para cada categoría a partir de sus vectores polares.
+
+    Esta función toma un diccionario donde cada clave es una categoría y su valor es una lista de tuplas (radio, ángulo) que representan los vectores en coordenadas polares. Para cada categoría, convierte estos vectores a coordenadas cartesianas (x, y), suma todas las componentes y devuelve el vector resultante total para cada categoría.
 
     Args:
-        datos (dict): datos de las categorias con los valores
+        datos (dict): Diccionario donde cada clave es una categoría y su valor es una lista de tuplas (radio, ángulo) en coordenadas polares.
 
     Returns:
-        dict: Devuelve un diccionario con los vectores resultantes en coordenadas polares 
+        dict: Diccionario donde cada clave es una categoría y su valor es una tupla (x, y) que representa el vector resultante en coordenadas cartesianas.
     """
-    # Extre la lista de  vectores por categoria
     vectores_resultantes_por_categoria = []
     for categoria in datos:
         lista_vectores_por_categoria = datos[categoria]
-        # Extre las coordenadas de cada vector por categoria
         abscisas = []
         ordenadas = []
         for radio, theta in lista_vectores_por_categoria:
@@ -102,15 +108,11 @@ def vector_resultante_por_categoria(datos:dict) -> dict:
 
         vector_resultante = (total_abscisas, total_ordenadas)
         vectores_resultantes_por_categoria.append(vector_resultante)
-    # Asigna cada vector a su categoría correspondiente
     nuevos_datos = {}
     for indice, categoria in enumerate(datos):
         nuevos_datos[categoria] = vectores_resultantes_por_categoria[indice]
     return nuevos_datos
 
-vectores_resultantes_bf1 = vector_resultante_por_categoria(datos_vectores_bf1)
-vectores_resultantes_bf2 = vector_resultante_por_categoria(datos_vectores_bf2)
-vectores_resultantes_bf3 = vector_resultante_por_categoria(datos_vectores_bf3)
 # Crear la figura
 """
 Matriz del layout
@@ -124,26 +126,27 @@ fig, ((bf1,bf2,bf3),(cf1,cf2,cf3),(if1,if2,if3)) = plt.subplots(
     subplot_kw=dict(projection='polar'),
 )
 
-def radar(
-        grafica:str = None, 
-        datos:dict = None, 
-        vectores_resultantes:dict = None, 
-        color:list = None, 
-        estilizar:bool = True
+def radar(subgrafica:str = None, datos:dict = None, vectores_resultantes_xy:dict = None, color:list = None, titulo:str= None
 )-> None:
-    """Funcion que gráfica un radar con tres telarañas
+    """
+    Dibuja una gráfica radar (o de telaraña) con varias categorías y añade los vectores resultantes para cada una.
+
+    Esta función grafica los datos de varias categorías en una gráfica radar, rellenando cada área con un color distinto y añadiendo flechas que representan los vectores resultantes en coordenadas polares. Permite personalizar los colores y la estilización de la gráfica.
 
     Args:
-        grafica (str): Nombre de la gráfica de acuerdo al layout
-        datos (dict): Datos a por radar. En orden: Investigacion, Producto y Presentación
-        vectores_resultantes(dict): Vectores resultantes por radar (Tambien son 3)
-        color (list): Colores de la las telarañas
+        subgrafica (matplotlib.axes._subplots.PolarAxesSubplot): Subgráfica polar donde se dibujará el radar, de acuerdo al layout de la figura.
+        datos (dict): Diccionario con los datos de cada categoría. Cada valor debe ser una lista de números (radios para cada vértice del radar, ya con el primer valor repetido al final para cerrar el polígono).
+        vectores_resultantes_xy (dict): Diccionario con los vectores resultantes por categoría. Cada valor debe ser una tupla (x, y) en coordenadas cartesianas.
+        color (list): Lista de colores para cada categoría.
+
+    Returns:
+        None: Esta función solo dibuja sobre la subgráfica proporcionada.
     """
-    vectores_por_categoria =list_comprehension(vectores_resultantes)
+    vectores_por_categoria =list_comprehension(vectores_resultantes_xy)
 
     for indice, categoria in enumerate(datos):
-        grafica.plot(angulos, datos[categoria], color=color[indice])
-        grafica.fill(angulos, datos[categoria], color=color[indice], alpha=0.1)
+        subgrafica.plot(angulos, datos[categoria], color=color[indice])
+        subgrafica.fill(angulos, datos[categoria], color=color[indice], alpha=0.1)
 
         # Añadir los vectores resultantes a la gráfica
         # Convertir los vectores cartesianas a polares y graficar flechas
@@ -151,7 +154,7 @@ def radar(
             x, y = vec
             radio = np.sqrt(x**2 + y**2)
             theta = np.arctan2(y, x)
-            grafica.annotate(
+            subgrafica.annotate(
                 '',
                 xy=(theta, radio),
                 xytext=(0, 0),
@@ -159,35 +162,100 @@ def radar(
             )
 
     # Estilización de las gráficas    
-    while estilizar:
-        grafica.set_xticks(angulos) # vértices marcados
-        grafica.set_theta_direction(-1) # dirección horaria del ángulo 
-        grafica.set_xticklabels(["O&P","C&P", "A&H", "R&M","C&M","O&P"]) # Etiquetas de los vértices
-        grafica.set_theta_offset(np.pi/2) # rotación de la gráfica a 90 grados
-        grafica.set_yticks([1, 2, 3, 4, 5]) # etiquetas del eje radial
-        grafica.spines['polar'].set_visible(False) # eliminar el eje polar
-        grafica.set_ylim(0, 6) 
-        break
+    subgrafica.set_xticks(angulos) # vértices marcados
+    subgrafica.set_theta_direction(-1) # dirección horaria del ángulo 
+    subgrafica.set_xticklabels(categorias + ["O&P"] ,fontsize=8) # Etiquetas de los vértices
+    subgrafica.set_theta_offset(np.pi/2) # rotación de la gráfica a 90 grados
+    subgrafica.set_yticks([1, 2, 3, 4, 5]) # etiquetas del eje radial
+    subgrafica.spines['polar'].set_visible(False) # eliminar el eje polar
+    subgrafica.set_ylim(0, 6) 
+    subgrafica.set_title(titulo)
 
+def vectores_cohesion(datos:dict) -> dict:
+    """
+    Calcula la cohesión entre las diferentes categorías tomando el valor mínimo de cada vértice.
+    
+    Esta función toma un diccionario donde cada clave es una categoría y su valor es una lista de números. 
+    Calcula el valor mínimo para cada posición (vértice) entre todas las categorías.
+    
+    Args:
+        datos (dict): Diccionario con las categorías y sus valores.
+        
+    Returns:
+        dict: Diccionario con una sola clave "cohesion" y una lista con los valores mínimos por vértice.
+    """
+    dat = list_comprehension(datos)
+    vertices = list(zip(*dat))  # Convertir a lista para poder iterar múltiples veces
+    minimos = [min(u) for u in vertices]
+    cohesion = {
+        'cohesion': minimos,
+    }
+    return cohesion
+
+def vectores_integracion(datos:dict) -> dict:
+    """
+    Calcula la integracion entre las diferentes categorías tomando el valor máximo de cada vértice.
+    
+    Esta función toma un diccionario donde cada clave es una categoría y su valor es una lista de números. 
+    Calcula el valor máximo para cada posición (vértice) entre todas las categorías.
+    
+    Args:
+        datos (dict): Diccionario con las categorías y sus valores.
+        
+    Returns:
+        dict: Diccionario con una sola clave "integración" y una lista con los valores máximos por vértice.
+    """
+    dat = list_comprehension(datos)
+    vertices = list(zip(*dat))  # Convertir a lista para poder iterar múltiples veces
+    maximos = [max(u) for u in vertices]
+    integracion = {
+        'integracions': maximos,
+    }
+    return integracion
+
+
+
+def graficar_radar(subgrafica:str ,data:dict, color:list,titulo:str) -> None:
+    data_loop = loop_data(data)
+    datos_vectores = generar_vectores_por_categoria(data, angulos_raw)
+    vectores_resultantes = vector_resultante_por_categoria(datos_vectores)
+    radar(subgrafica, datos= data_loop, vectores_resultantes_xy=vectores_resultantes, color= color,titulo=titulo)
 
 
 # Gráficar
 color= ['#38761d', '#bf9133', "#351e75"]
+graficar_radar(bf1,data_bf1,color,"Fase 1")
+graficar_radar(bf2,data_bf2,color,"Fase 2")
+graficar_radar(bf3,data_bf3,color,"Fase 3")
 
-estilizar = True
+cohesion_cf1 = vectores_cohesion(data_bf1)
+cohesion_cf2 = vectores_cohesion(data_bf2)
+cohesion_cf3 = vectores_cohesion(data_bf3)
+graficar_radar(cf1,cohesion_cf1,["#bf2525"],"Cohesion 1")
+graficar_radar(cf2,cohesion_cf2,["#bf2525"],"Coheison 2")
+graficar_radar(cf3,cohesion_cf3,["#bf2525"],"Cohesion 3")
 
-data_bf1 = loop_data(data_bf1)
-radar(bf1, datos= data_bf1, vectores_resultantes=vectores_resultantes_bf1, color= color, estilizar=estilizar)
-print("")
+integracion_if1 = vectores_integracion(data_bf1)
+integracion_if2 = vectores_integracion(data_bf2)
+integracion_if3 = vectores_integracion(data_bf3)
+graficar_radar(if1,integracion_if1,["#bf2525"],"Integración 1")
+graficar_radar(if2,integracion_if2,["#bf2525"],"Integración 2")
+graficar_radar(if3,integracion_if3,["#bf2525"],"Integración 3")
 
-data_bf2 = loop_data(data_bf2)
-radar(bf2, datos= data_bf2, vectores_resultantes=vectores_resultantes_bf2, color= color, estilizar=estilizar)
-print("")
 
-data_bf3 = loop_data(data_bf3)
-radar(bf3, datos= data_bf3, vectores_resultantes=vectores_resultantes_bf3,color= color, estilizar=estilizar)
-print("")
-
+fig.suptitle(
+    "Innovarte\nDesarrollo Anual del Proyecto",
+    fontsize=20,
+    fontname='Arial',
+    fontweight='bold'
+)
+fig.text(
+    0.5, 0.00, 
+    "Fuente: Datos obtenidos a través de las evaluaciones medidas con rúbricas. 2024-2025.",
+    ha='center', 
+    fontsize=10,
+    fontname='Arial'
+)
 plt.tight_layout()
 plt.show()
 
