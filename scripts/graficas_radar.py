@@ -246,7 +246,6 @@ def area_por_categoria(data:dict) -> dict:
 
     return nuevos_datos
 
-
 def radar(subgrafica:str = None, datos:dict = None, vectores_resultantes_xy:dict = None, color:list = None, title_props:dict = None, leyend_props:dict = None,label:list = None
 )-> None:
     """
@@ -277,7 +276,7 @@ def radar(subgrafica:str = None, datos:dict = None, vectores_resultantes_xy:dict
             theta = np.arctan2(y, x)
             subgrafica.annotate(
                 '',
-                xy=(theta, radio),
+                xy=(theta, radio), # Orden del vector necesairio para matplotlib en gráficas polares
                 xytext=(0, 0),
                 arrowprops=dict(facecolor=color[i], edgecolor=color[i], shrink=0, width=1, headwidth=6, alpha=0.7)
             )
